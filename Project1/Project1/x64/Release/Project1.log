@@ -1,0 +1,2 @@
+﻿  drawLine.cpp
+C:\Users\Popmintchev LABS\Desktop\LaserGUI\Project1\drawLine.cpp(95,1): warning C4326:  return type of 'main' should be 'int' instead of 'void'
