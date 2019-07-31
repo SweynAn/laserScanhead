@@ -1,0 +1,14 @@
+﻿  main.cpp
+C:\Users\Popmintchev LABS\Desktop\LaserGUI\scanheadTest\main.cpp(97,1): warning C4326:  return type of 'main' should be 'int' instead of 'void'
+C:\Users\Popmintchev LABS\Desktop\LaserGUI\scanheadTest\main.cpp(313,1): error C4996:  'kbhit': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _kbhit. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\ucrt\conio.h(459): message :  see declaration of 'kbhit'
+C:\Users\Popmintchev LABS\Desktop\LaserGUI\scanheadTest\main.cpp(315,1): error C4996:  'getch': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _getch. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\ucrt\conio.h(453): message :  see declaration of 'getch'
+C:\Users\Popmintchev LABS\Desktop\LaserGUI\scanheadTest\main.cpp(454,1): error C4996:  'kbhit': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _kbhit. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\ucrt\conio.h(459): message :  see declaration of 'kbhit'
+C:\Users\Popmintchev LABS\Desktop\LaserGUI\scanheadTest\main.cpp(456,1): error C4996:  'getch': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _getch. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\ucrt\conio.h(453): message :  see declaration of 'getch'
+C:\Users\Popmintchev LABS\Desktop\LaserGUI\scanheadTest\main.cpp(656,1): error C4996:  'kbhit': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _kbhit. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\ucrt\conio.h(459): message :  see declaration of 'kbhit'
+C:\Users\Popmintchev LABS\Desktop\LaserGUI\scanheadTest\main.cpp(658,1): error C4996:  'getch': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _getch. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\ucrt\conio.h(453): message :  see declaration of 'getch'
