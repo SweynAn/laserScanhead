@@ -1,36 +1,25 @@
 //  File
 //      main.cpp
 //
-//  Abstract
+//  Abstract 
+//		First testing program help test the mark jump
+//      home postion, jumpspeed, markSpeed, and etc.
+//
+//  Comment
 //      The simplest function using cpp method 
 //      Please do not use object oriented programming 
 //      evaluate case by case or test by test
 //      important to load laser inside the main function
 //
 //  Author
-//      Bernhard Schrems, SCANLAB AG
-//      adapted for RTC5: Hermann Waibel, SCANLAB AG
+//      Shiwen An, Popmintchev Labs July, 2019
 //
 //  Features
 //      - explicit linking to the RTC5DLL.DLL
 //      - use of the list buffer as a single list like a circular queue 
 //        for continuous data transfer
 //      - exception handling
-//
-//  Comment
-//      This application demonstrates how to explicitly link to the
-//      RTC5DLL.DLL. For accomplishing explicit linking - also known as
-//      dynamic load or run-time dynamic linking of a DLL, the header
-//      file RTC5expl.H is included.
-//      Before calling any RTC5 function, initialize the DLL by calling
-//      the function RTC5open.
-//      When the usage of the RTC5 is finished, close the DLL by 
-//      calling the function RTC5close.
-//      For building the executable, link with the RTC5EXPL.OBJ, which
-//      you can generate from the source code RTC5expl.c.
-//
-//      This routine also shows how to use the list buffer as a circular
-//      queue. Methods to halt and to resume the data transfer are also shown.
+//		- Test driven development testing various case and basic function
 //
 //  Necessary Sources
 //      RTC5expl.h, RTC5expl.c
@@ -124,13 +113,13 @@ int __cdecl main(void*, void*){
 
 			if (AccError){
 				terminateDLL();
-				return;
+				return 1;
 			}
 		}
 		else{
 			printf("Initializing the DLL: Error %d detected\n", ErrorCode);
 			terminateDLL();
-			return;
+			return 1;
 		}
 	}
 	else {
@@ -185,8 +174,154 @@ int __cdecl main(void*, void*){
 	std::cout << "Initialization RTC5board and file loading Finished!! Set up Lasers";
 
 	config_list(10000, 0); //  Configure list memory, default: config_list( 4000, 4000 ).
-	set_laser_mode();  // 0 CO2 mode YAG 
- 
+	set_laser_mode(0);  // 0 CO2 mode 1 YAG , Not useful for our experiment
+	set_firstpulse_killer( FirstPulseKiller ); // used to kill the first pulse
+	set_laser_control( LaserControl ); //setup laser control
+
+	// Test 0 check which function works best for the home position
+	// or stand by place?
+	// set_standby
+	home_position(1,1); // home_position(X,Y) setup for jump near origin (0,0) to disable
+
+    // Timing, delay and speed preset
+    // Laser on and laser off
+    // some parameter need to measure
+    // LaserHalfPeriod ==> (T/2) || (Pi/omega) based on physics of laser
+    set_start_list( 1 );
+        set_laser_pulses( LaserHalfPeriod, LaserPulseWidth );
+        set_scanner_delays( JumpDelay, MarkDelay, PolygonDelay );
+        set_laser_delays( LaserOnDelay, LaserOffDelay );
+        set_jump_speed( JumpSpeed );
+        set_mark_speed( MarkSpeed );
+    set_end_of_list();
+
+    execute_list( 1 ); 
+
+    // test: does execute_list pop up the command in the list?
+
+
+
+
+    // Add a switch method for debugging the program
+    // Switch 1,2,3,4,5 ... and etc.
+    // 1 Laser On/Off
+    // 2 Jump :
+    //		i) physically ensure the location 
+    //         in unit of mm , might need conversion table
+    //         from mm to bit as the result
+    // 3 Jump and Mark point
+    // 4 Mark line using position
+    // 5 Test controlling of speed for Marking
+    // 6 draw a shape with certain algorithm
+
+    // Test 1 Control laser ON/OFF
+    // do this part in the lab
+    std::cout << "Test1 On/Off Laser Control\n";
+    do{
+    	string s;
+    	while(! _getch()) disable_laser();
+    	while(! _getch()) enable_laser();
+    	std::cout << "Continue to check On/Off? [Y/N] \n"
+    	std::cin >> s;
+    	if( s == "n" || s == "N") break;
+	}while(true);
+
+
+	// Test 2 Control the jump
+	double jumpX, jumpY;
+	std::cout << "Which location you want to get the point?(x,y)[mm]\n"
+	std::cin >> jumpX;
+	std::cin >> jumpY;
+	std::cout << "hit the keyboard to Stop jumping\n"
+    do{
+    	load_list(1,0); // sta
+    		jump_abs(jumpX,jumpY);
+    	set_end_of_list();
+    	execute_list(1);
+    	if( _getch()) break;
+	}while(true);
+
+	// test another function reset to (0,0)
+	goto_xy(0,0);
+
+	// Test 3 Control the mark
+	double markX, markY;
+	std::cout << "Which location you want to get the point?(x,y)[mm]\n"
+	std::cin >> markX;
+	std::cin >> markY;
+	std::cout << "hit the keyboard to Stop marking\n"
+    do{
+    	load_list(1,0); // sta
+    		jump_abs(markX,markY);
+    		mark_abs(markX,markY);
+    	set_end_of_list();
+    	execute_list(1);
+    	if( _getch()) break;
+	}while(true);
+
+	// Test 4 mark a line, which should be 
+	// simple using vector , I used complicated method when
+	// first trying to address such problem 
+
+	double startX, startY, endX, endY;
+	std::cout << "Which start location you want to get the point?(x,y)[mm]\n"
+	std::cin >> startX;
+	std::cin >> startY;
+	std::cout << "Which start location you want to get the point?(x,y)[mm]\n"
+	std::cin >> endX;
+	std::cin >> endY;
+	std::cout << "hit the keyboard to Stop marking\n"
+
+	// Jump before the execution
+	load_list(1,0);
+		jump_abs(startX,startY);
+	set_end_of_list();
+	execute_list(1);
+
+	// do the marking based on vector map instead of using loop
+    do{
+    	load_list(1,0); // sta
+    		mark_abs(endX,endY);
+    		mark_abs(startX,startY);
+    	set_end_of_list();
+    	execute_list(1);
+    	if( _getch()) break;
+	}while(true);
+
+
+	// Test 5 test the mark speed influence
+
+    // Lens used for "D2_1to1.ct5" gives 
+    // K = 13376 bit/mm
+    // V_mark =  speed/K ==> set_mark_speed(V_mark*K)
+    // debug test
+    
+    double mSpeed;
+    do{
+		std::cout<< "mark speed (m/s) [0 quit test] : ";
+		std::cin >> mSpeed;
+		if(mSpeed == 0) break;
+
+		// Hard coding for speed test purpose
+		load_list(1,0);
+    		set_mark_speed(mSpeed*K);
+    		jump_abs(-100,-100); 
+    	set_end_of_list();
+    	execute_list(1);
+    	
+    	do{
+    		load_list(1,0); // sta
+    			mark_abs(100,100);
+    			mark_abs(-100,-100);
+    		set_end_of_list();
+    		execute_list(1);
+    		if( _getch()) break;
+		}while(true);
+    }while(true);
+
+	// End of test
+	std::cout << "Test Finished! \n";
+	terminateDLL()
 	return 0;
 }
 
