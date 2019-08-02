@@ -102,6 +102,8 @@ void draw(const polygon* figure, const size_t& size);
 void test1();
 void test1_1();
 void test1_2();
+void test2_1();
+void test3_1();
 void terminateDLL();            //  waits for a keyboard hit to terminate
 
 #include <iostream>
@@ -238,7 +240,7 @@ int __cdecl main(void*, void*){
 
 	//  Configure list memory, default: config_list( 4000, 4000 ).
 	//  One list only we probably only need the default one
-	//config_list(ListMemory, 0);
+	config_list(ListMemory, 0);
 	
 	//  input_list_pointer and out_list_pointer will jump automatically 
 	//  from the end of the list onto position 0 each without using
@@ -265,40 +267,70 @@ int __cdecl main(void*, void*){
 	// some parameter need to measure
 	// LaserHalfPeriod ==> (T/2) || (Pi/omega) based on physics of laser
 	set_start_list(1);
-	long_delay(WarmUpTime);
-	set_laser_pulses(LaserHalfPeriod, LaserPulseWidth);
-	set_scanner_delays(JumpDelay, MarkDelay, PolygonDelay);
-	set_laser_delays(LaserOnDelay, LaserOffDelay);
-	set_jump_speed(JumpSpeed);
-	set_mark_speed(MarkSpeed);
+		set_laser_pulses(LaserHalfPeriod, LaserPulseWidth);
+		set_scanner_delays(JumpDelay, MarkDelay, PolygonDelay);
+		set_laser_delays(LaserOnDelay, LaserOffDelay);
+		set_jump_speed(JumpSpeed);
+		set_mark_speed(MarkSpeed);
 	set_end_of_list();
 
 	execute_list(1);
 
-	// Draw to warm up, given function 
-	// Please do not use _getch() directly to catch the keyboard input
-	// use kbhit+getch together for stop a loop
+
+	// Lens used for "D2_1to1.ct5" gives 
+	// K = 13376 bit/mm
+	// V_mark =  speed/K ==> set_mark_speed(V_mark*K)
+	std::cout << "[1] Test1 draw simple line based vector\n";
+	std::cout << "[2] Test2 draw circle with radius input\n";
+	std::cout << "[3] Test3 Fill a square \n";
+	std::cout << "Input 'y' for continue the same test, others to exit or switch\n";
 
 	do {
-		draw(square, sizeof(square) / sizeof(square[0]));
-		draw(triangle, sizeof(triangle) / sizeof(triangle[0]));
-		if(_kbhit()) if (_getch()) break;
-	} while (true);
-	
-	std::cout << "Test1_1 mark point/line, hit keyboard break";
+		std::cout << "Input the test number [1/2/3]: \n";
+		switch (_getch())
+		{
+		case '1':
+			std::cout << "Test1 line drawing [x,y: 0~13mm]: \n";
+			std::cout << "Start position; End Position ; Mark Speed\n";
+			do {
+				test1();
+				std::cout << "continue? [y/n] \n";
+			} while (_getch() == 'y');
+			std::cout << "Test1 Done! \n \n";
+			break;
+		case '2':
+			std::cout << "Test2 circle drawing [r: 0~13mm]: \n";
+			std::cout << "Radius, start position \n";
+			do {
+				test2_1();
+				std::cout << "continue? [y/n]\n";
+			} while (_getch() == 'y');
+			std::cout << "Test2 Done! \n \n";
+			break;
+		case '3':
+			std::cout << "Test3 fill a square [d: 0~48mm]: \n";
+			std::cout << "length of the side \n";
+			do {
+				test3_1();
+				std::cout << "continue? [y/n]\n";
+			} while ( _getch() == 'y');
+			break;
+		default:
+			std::cout << "Please give valid input \n";
+			break;
+		}
+		std::cout << "Want other test? [y/n] \n";
+	} while (_getch() == 'y');
+	// finish this point 
+	// End of test
+	std::cout << "Test Finished! \n";
+	terminateDLL();
+	return 0;
 
-	do {
-		test1_1();
-		if (_kbhit()) if (_getch()) break;
-	} while (true);
 
-	test1_2();
-
-	test1();
 
 	// restart_list();
 	// executed if a list was 
-
     // Add a switch method for debugging the program
     // Switch 1,2,3,4,5 ... and etc.
     // 1 Laser On/Off
@@ -311,7 +343,6 @@ int __cdecl main(void*, void*){
     // 5 Test controlling of speed for Marking
 	// 6 Random Jump of Laser
     // 7 draw a shape with certain algorithm
-
     // Test 1 Control laser ON/OFF
     // do this part in the lab
 	
@@ -326,10 +357,7 @@ int __cdecl main(void*, void*){
     	if( s == "n" || s == "N") break;
 	}while(true);
 	*/
-
 	// restart_list();
-
-
 
 	// Test 2 Control the jump
 	long jumpX, jumpY;
@@ -355,50 +383,16 @@ int __cdecl main(void*, void*){
 	std::cin >> markX;
 	std::cin >> markY;
 	std::cout << "hit the keyboard to Stop marking\n";
-    do{
-    	load_list(1,0); // sta
-    		jump_abs(markX,markY);
-    		mark_abs(markX,markY);
-    	set_end_of_list();
-    	execute_list(1);
-    	if( _getch()) break;
+	load_list(1, 0); // sta
+    
+	do{
+    	jump_abs(markX,markY);
+    	mark_abs(markX,markY);
+    	if( _kbhit()) break;
 	}while(true);
 
-
-	// Test 5 test the mark speed influence
-
-    // Lens used for "D2_1to1.ct5" gives 
-    // K = 13376 bit/mm
-    // V_mark =  speed/K ==> set_mark_speed(V_mark*K)
-    // debug test
-    
-    long mSpeed, K;
-	load_list(1, 0);
-		K = get_head_para(1, 1);
 	set_end_of_list();
 	execute_list(1);
-
-    do{
-		std::cout<< "mark speed (m/s) [0 quit test] : ";
-		std::cin >> mSpeed;
-		if(mSpeed == 0) break;
-
-		// Hard coding for speed test purpose
-		load_list(1,0);
-    		set_mark_speed(mSpeed*K);
-    		jump_abs(-100,-100); 
-    	set_end_of_list();
-    	execute_list(1);
-    	
-    	do{
-    		load_list(1,0); // sta
-    			mark_abs(100,100);
-    			mark_abs(-100,-100);
-    		set_end_of_list();
-    		execute_list(1);
-    		if( _getch()) break;
-		}while(true);
-    }while(true);
 
 	// End of test
 	std::cout << "Test Finished! \n";
@@ -407,38 +401,10 @@ int __cdecl main(void*, void*){
 }
 
 
-void test1() {
-
-	// Test 4 mark a line, which should be 
-    // simple using vector , I used complicated method when
-    // first trying to address such problem 
-	LONG startX, startY, endX, endY;
-	std::cout << "start point?(x,y)[mm]\n";
-	std::cin >> startX;
-	std::cin >> startY;
-	std::cout << "end point?(x,y)[mm]\n";
-	std::cin >> endX;
-	std::cin >> endY;
-	std::cout << "hit the keyboard to Stop marking\n";
-
-	// Jump before the execution
-	while (!load_list(1U, 0U)) {};
-	jump_abs(startX, startY);
-
-	// do the marking based on vector map instead of using loop
-	//do {
-	
-	mark_abs(endX, endY);
-	mark_abs(startX, startY);
-
-		//if (_getch()) break;
-	//} while (true);
-
-	set_end_of_list();
-	execute_list(1U);
-
-}
-
+// 
+// Description: test1_1
+// run with the speed of algorithm inside a do while loop 
+// 
 void test1_1() {
 	LONG a, b;
 	a = 12345;
@@ -450,33 +416,193 @@ void test1_1() {
 	mark_abs(a, b);
 	set_end_of_list();
 	execute_list(1U);
+
+	/* original part of main 
+	 * no longer needed as while loop can not help us control
+	 * the speed of marking
+	 *
+	std::cout << "Test1_1 mark point/line, hit keyboard break";
+	do {
+		test1_1();
+		if (_kbhit()) break;
+	} while (true);
+	 *
+	 *
+	 */
 }
 
 //
+// test1_2() from 20000 to -20000
 // advanced version of test1_1
 //
 void test1_2() {
-	LONG x, y, a, b;
+	/*
+	std::cout << "Test1_2 mark line for 10s \n";
+	test1_2();
+	std::cout << "Test1_2 done \n \n";
+	*/
+	LONG x, y, a, b, t;
 	x = 20000;
 	y = 20000;
 	a = -20000;
 	b = -20000;
-	std::cout << "Test1_1 with a:" << a << "and b: " << b << "\n";
+	t = 1;
+	std::cout << "Test1_2 with a:" << a << "and b: " << b << "\n";
 	std::cout << "Test1_2 with x:" << x << "and y: " << y << "\n";
+	std::cout << "Will plot for 10 seconds \n";
 
-
-	while (!load_list(1U, 0U)) {}
-	do {
+	while (!load_list(1, 0U)) {}
+	while(t<20){
 		mark_abs(a, b);
 		mark_abs(x, y);
-		if (_kbhit()) if (_getch()) break;
-	} while (true);
+		++t;
+	}
+
+	set_end_of_list();
+	execute_list(1);
+}
+
+//
+// Description: 
+// Test1 jump to start position 
+// and mark the stuff till the end position
+//
+void test1() {
+
+	// Test 4 mark a line, which should be 
+    // simple using vector , I used complicated method when
+    // first trying to address such problem 
+	LONG startX, startY, endX, endY, t;
+	double K, vMark;
+	std::cout << "start point?(x,y)[mm]\n";
+	std::cin >> startX;
+	std::cin >> startY;
+	std::cout << "end point?(x,y)[mm]\n";
+	std::cin >> endX;
+	std::cin >> endY;
+	std::cout << " Hom many turns? \n";
+	std::cin >> t;
+	std::cout << " mark speed? [m/s] \n";
+	std::cin >> vMark;
+
+	if ( startX<-18 || startX > 18 ||
+		startY < -18 || startY > 18 || 
+		endX < -18 || endX > 18 || 
+		endY < -18 || endY > 18 ) {
+		std::cerr << "Out of range!!\n";
+		return;// parameter protection
+	}
+
+	while (!load_list(1U, 0U)) {};
+
+	// due to the existence of lens/objective
+	// divide by 10 is necessary for accurate position?
+	K = get_head_para(1, 1);
+	set_mark_speed( vMark*K/10 );
+	startX = startX * K /10;
+	startY = startY * K /10;
+	endX = endX * K /10;
+	endY = endY * K /10;
+
+	jump_abs(startX, startY);
+	while ( t>0) {
+		mark_abs(endX, endY);
+		mark_abs(startX, startY);
+		t--;
+	}
 	set_end_of_list();
 	execute_list(1U);
 }
 
+
+//
+// the test of drawing a circle with respect to the center
+// To get safe working range of the laser
+//
+void test2_1() {
+	LONG r, t;
+	double K, vMark;
+	std::cout << "Radius of circle? \n";
+	std::cin >> r;
+	std::cout << " mark speed? [m/s] \n";
+	std::cin >> vMark;
+	std::cout << "How many turns? [ max 10000 ] \n";
+	std::cin >> t;
+
+	if (r < 0 || r>24) {
+		std::cerr << "Out of range!!\n";
+		return;// parameter protection
+	}
+
+	while (!load_list(1, 0)) {};
+	K = get_head_para(1, 1);
+	set_mark_speed(vMark * K / 10);
+	r = r * K / 10;
+
+	jump_abs(r, 0);
+	while (t > 0) {
+		arc_abs(0, 0, 360 );
+		t--;
+	}
+	
+	set_end_of_list();
+	execute_list(1);
+}
+
+void test3_1() {
+
+	long a;
+	double K, vMark;
+
+	std::cout << "Length of square? \n";
+	std::cin >> a;
+	std::cout << " mark speed? [m/s] \n";
+	std::cin >> vMark;
+
+	if (a < 0 || a>36) {
+		std::cerr << "Out of range!!\n";
+		return;// parameter protection
+	}
+
+	int i = 0;
+
+	while (!load_list(1, 0)) {};
+	K = get_head_para(1, 1);
+	set_mark_speed(vMark * K / 10);
+	a = long(a * K / 20);
+
+	jump_abs(-a, -a);
+
+	while (a > 0) {
+		mark_abs(-a, a);
+		mark_abs(a, a);
+		mark_abs(a, -a);
+		mark_abs(-a, -a);
+		a = a - 100;
+	}
+
+	set_end_of_list();
+	execute_list(1U);
+}
+
+// 
+// Description: draw warmup program 
+// used for test/example
+// Draw to warm up, given function 
+// Please do not use _getch() directly to catch the keyboard input
+// use kbhit together for stop a loop
 void draw(const polygon* figure, const size_t& size)
 {
+
+	/*
+	std::cout << "Test 0 Warm Up, draw a square and a triangle, hit keyboard break \n";
+	do {
+		draw(square, sizeof(square) / sizeof(square[0]));
+		draw(triangle, sizeof(triangle) / sizeof(triangle[0]));
+		if (_kbhit()) break;
+	} while (true);
+	*/
+
 	// Only, use list 1, which can hold up to the configured entries
 	while (!load_list(1U, 0U)) {} //  wait for list 1 to be not busy
 	//  load_list( 1, 0 ) returns 1 if successful, otherwise 0
