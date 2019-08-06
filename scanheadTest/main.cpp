@@ -101,14 +101,21 @@ int PlotLine(const locus& destination, UINT* start);
 void draw(const polygon* figure, const size_t& size);
 void test1();
 void test1_1();
-void test1_2();
-void test2_1();
-void test3_1();
-void terminateDLL();            //  waits for a keyboard hit to terminate
+void test1_2();                  //  Line drawing 
+void test2_1();				     //	 Circle drawing
+void test3_1();                  //  Square Drawing 
+void test3_2(long a, double v);  //  Helpper method helps with 3_1
+void test4_1();					 //  Square drawing with pause
+void test4_2(locus& p, long i);  //  Square drawing helpper
+void terminateDLL();             //  waits for a keyboard hit to terminate
 
 #include <iostream>
 using namespace std;
 
+
+// _cdecl is "Calling conventions"
+// the stack is cleaned up by the caller
+// creates larger executables than _stdcall 
 
 int __cdecl main(void*, void*){
 
@@ -283,10 +290,12 @@ int __cdecl main(void*, void*){
 	std::cout << "[1] Test1 draw simple line based vector\n";
 	std::cout << "[2] Test2 draw circle with radius input\n";
 	std::cout << "[3] Test3 Fill a square \n";
-	std::cout << "Input 'y' for continue the same test, others to exit or switch\n";
+	std::cout << "Input 'y' to continue the same test, others to exit or switch\n";
+	std::cout << "Input 's' to suspend the test [Program developing]\n";
+
 
 	do {
-		std::cout << "Input the test number [1/2/3]: \n";
+		std::cout << "Input the test number [1/2/3/4]: \n";
 		switch (_getch())
 		{
 		case '1':
@@ -309,7 +318,6 @@ int __cdecl main(void*, void*){
 			break;
 		case '3':
 			std::cout << "Test3 fill a square [d: 0~48mm]: \n";
-			std::cout << "length of the side \n";
 			do {
 				test3_1();
 				std::cout << "continue? [y/n]\n";
@@ -326,7 +334,6 @@ int __cdecl main(void*, void*){
 	std::cout << "Test Finished! \n";
 	terminateDLL();
 	return 0;
-
 
 
 	// restart_list();
@@ -359,45 +366,6 @@ int __cdecl main(void*, void*){
 	*/
 	// restart_list();
 
-	// Test 2 Control the jump
-	long jumpX, jumpY;
-	std::cout << "Which location you want to get the point?(x,y)[mm]\n";
-	std::cin >> jumpX;
-	std::cin >> jumpY;
-	std::cout << "hit the keyboard to Stop jumping\n";
-	
-	load_list(1, 0); // sta
-	do{
-    	jump_abs(jumpX,jumpY);
-    	if( _getch()) break;
-	}while(true);
-	set_end_of_list();
-	execute_list(1);
-
-	// test another function reset to (0,0)
-	goto_xy(0,0);
-
-	// Test 3 Control the mark
-	long markX, markY;
-	std::cout << "Which location you want to get the point?(x,y)[mm]\n";
-	std::cin >> markX;
-	std::cin >> markY;
-	std::cout << "hit the keyboard to Stop marking\n";
-	load_list(1, 0); // sta
-    
-	do{
-    	jump_abs(markX,markY);
-    	mark_abs(markX,markY);
-    	if( _kbhit()) break;
-	}while(true);
-
-	set_end_of_list();
-	execute_list(1);
-
-	// End of test
-	std::cout << "Test Finished! \n";
-	terminateDLL();
-	return 0;
 }
 
 
@@ -410,7 +378,7 @@ void test1_1() {
 	a = 12345;
 	b = 12345;
 
-	std::cout << "Test1_1 with a:" << a << "and b: " << b << "\n";
+	std::cout << "Test1_1 with a: " << a << "and b: " << b << "\n";
 
 	while (!load_list(1U, 0U)) {}
 	mark_abs(a, b);
@@ -551,9 +519,11 @@ void test2_1() {
 
 void test3_1() {
 
-	long a;
+	long a, c, t;
 	double K, vMark;
 
+	std::cout << "How many times? \n";
+	std::cin >> t;
 	std::cout << "Length of square? \n";
 	std::cin >> a;
 	std::cout << " mark speed? [m/s] \n";
@@ -564,26 +534,92 @@ void test3_1() {
 		return;// parameter protection
 	}
 
-	int i = 0;
 
 	while (!load_list(1, 0)) {};
 	K = get_head_para(1, 1);
 	set_mark_speed(vMark * K / 10);
 	a = long(a * K / 20);
+	c = a;
+	jump_abs(-a, c);
+	while (c > -a) {
+		mark_abs(a, c);
+		mark_abs(-a, c);
+		c -= 50;
+	}
 
-	jump_abs(-a, -a);
+	c = -a;
+	jump_abs(-c, -a);
 
-	while (a > 0) {
-		mark_abs(-a, a);
-		mark_abs(a, a);
-		mark_abs(a, -a);
-		mark_abs(-a, -a);
-		a = a - 100;
+	while (c < a) {
+		mark_abs(c,-a);
+		mark_abs(c,a);
+		c += 50;
+	}
+
+	set_end_of_list();
+	execute_list(1U);
+
+
+	// Unit not complete
+	// Still have several problems
+	while (t > 1) { 
+		
+		while (!load_list(1, 0)) {
+			if (_kbhit()) {
+				switch (_getch()) {
+				case 's':
+				case 'S':
+					pause_list();
+					std::cout << "Plot Suspend, Press any key to continue\n";
+					break;
+				case 'e':
+				case 'E':
+					restart_list();
+					stop_execution();
+					std::cout << "--Exit Plot process--\n";
+					break;
+				default:
+					std::cout << "Command not clear, enter [e/s] for exit and pause\n";
+				}
+			}
+		}
+
+		test3_2(a, vMark * K / 10.0);
+		t--;
+	}
+}
+
+//
+// Description: Test 3_2 
+// the drawing based on the 3_1 
+// Could repeat as many times as possible
+// 
+void test3_2( long a, double v) {
+	long c;
+	while (!load_list(1, 0)) {};
+	set_mark_speed(v);
+	c = a;
+	jump_abs(-a, c);
+	while (c > -a) {
+		mark_abs(a, c);
+		mark_abs(-a, c);
+		c -= 50;
+	}
+
+	c = -a;
+	jump_abs(-c, -a);
+
+	while (c < a) {
+		mark_abs(c, -a);
+		mark_abs(c, a);
+		c += 50;
 	}
 
 	set_end_of_list();
 	execute_list(1U);
 }
+
+
 
 // 
 // Description: draw warmup program 
@@ -626,9 +662,6 @@ void draw(const polygon* figure, const size_t& size)
 //  The function waits for a keyboard hit
 //  and then calls free_rtc5_dll().
 //  
-
-
-
 void terminateDLL()
 {
 	printf("- Press any key to shut down \n");
