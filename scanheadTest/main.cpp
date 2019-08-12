@@ -48,7 +48,7 @@ const UINT   LoadGap = 100;   //  gap ahead between out_pointer and input_pointe
 const UINT   PointerCount = 0x3F;   //  pointer mask for checking the gap
 
 // RTC4 compatibility mode assumed
-const UINT   AnalogOutChannel = 1;   //  AnalogOut Channel 1 used
+//const UINT   AnalogOutChannel = 1;   //  AnalogOut Channel 1 used
 const UINT   AnalogOutValue = 640;   //  Standard Pump Source Value
 const UINT   AnalogOutStandby = 0;   //  Standby Pump Source Value
 const UINT   WarmUpTime = 2000000 / 10;   //    2  s [10 us]
@@ -69,16 +69,70 @@ const double Amplitude = 10000.0;
 const double Period = 512.0;   // amount of vectors per turn
 const double Omega = 2.0 * Pi / Period;
 
+//  Additional constants for pixelmode
+const UINT   AnalogOutChannel = 1;   //  must be 1 or 2, (used in Pixelmode)
+const UINT   LaserOffAnalog = (UINT)-1;   //  DefaultValue
+const UINT   LaserOffDigital = (UINT)-1;   //  DefaultValue
+const UINT   DefaultPixel = 0;   //  'last' pixel in Pixelmode
+
+const UINT   AnalogBlack = 0;   //  0 - 4095
+const UINT   AnalogWhite = 1023;   //  0 - 4095
+const UINT   DigitalBlack = 0;   //  PulseWidth for Black
+const UINT   DigitalWhite = LaserPulseWidth;//  PulseWidth for White
+
+//  Pulse Width and AnalogOut
+//  - a linear control of the pulse width and AnalogOut 
+//    within the specified black and white range.
+const long   AnalogGain = ((long)AnalogWhite - (long)AnalogBlack) / 255;
+const long   DigitalGain = ((long)DigitalWhite - (long)DigitalBlack) / 255;
+
+const double SpeedFactor = 1.0 / 1000.0;
+const long   Offset = (long)((double)LaserOnDelay * MarkSpeed * SpeedFactor);
+
+
+//  Desired Image Parameters
+//  add 0 to original Demo4 program
+const UINT   Pixels = 512;   //  pixels per line
+const UINT   Lines = 100;   //  lines per image
+const long   X_Location = -8192;   //  location of the left side of the image
+const long   Y_Location = 6400;   //  location of the upper side of the image
+const double DotDistance = 32.0;   //  pixel distance  [bits]
+const UINT   PixelHalfPeriod = 100 * 8;   //  100 us [1/8 us] must be at least 13
+
+
 // End Locus of a Line
 struct locus { long xval, yval; };
+
+unsigned char frame[Pixels][Lines];
+
+struct image
+{
+	long    xLocus, yLocus;     // upper left corner of the image in bits
+	double  dotDistance;        // pixel distance in bits
+	UINT    dotHalfPeriod;      // pixel half period in 1/8 us
+	UINT    ppl;                // pixels per line
+	UINT    lpi;                // lines per image
+	unsigned char* raster;      // pointer to the raster data
+};
+
+// The particular Image       
+image grayChessboard =
+{
+	X_Location, Y_Location,
+	DotDistance,
+	PixelHalfPeriod,
+	Pixels,
+	Lines,
+	&frame[0][0]
+};
+
 
 struct polygon
 {
 	LONG xval, yval;
 };
 
-const polygon square[] =
-{
+const polygon square[] ={
 	  {-R, -R}
 	, {-R,  R}
 	, {R,  R}
@@ -86,14 +140,12 @@ const polygon square[] =
 	, {-R, -R}
 };
 
-const polygon triangle[] =
-{
+const polygon triangle[] ={
 	  {-R,  0L}
 	, {R,  0L}
 	, {0L,  R}
 	, {-R,  0L}
 };
-
 
 const locus BeamDump = { -32000, -32000 }; //  Beam Dump Location
 
@@ -105,9 +157,12 @@ void test1_2();                  //  Line drawing
 void test2_1();				     //	 Circle drawing
 void test3_1();                  //  Square Drawing 
 void test3_2(long a, double v);  //  Helpper method helps with 3_1
-void test4_1();					 //  Square drawing with pause
-void test4_2(locus& p, long i);  //  Square drawing helpper
+void test4();					 //  bitmap test
 void terminateDLL();             //  waits for a keyboard hit to terminate
+
+int PrintImage(image* picture);  
+void makeChessboard( image * picture); 
+								// make chess board using pixel mode           
 
 #include <iostream>
 using namespace std;
@@ -290,6 +345,7 @@ int __cdecl main(void*, void*){
 	std::cout << "[1] Test1 draw simple line based vector\n";
 	std::cout << "[2] Test2 draw circle with radius input\n";
 	std::cout << "[3] Test3 Fill a square \n";
+	std::cout << "[4] Test4 will test bitmap input \n";
 	std::cout << "Input 'y' to continue the same test, others to exit or switch\n";
 	std::cout << "Input 's' to suspend the test [Program developing]\n";
 
@@ -322,6 +378,13 @@ int __cdecl main(void*, void*){
 				test3_1();
 				std::cout << "continue? [y/n]\n";
 			} while ( _getch() == 'y');
+			break;
+		case '4':
+			std::cout << "Test 4 will fill a bitmap \n";
+			do {
+				test4();
+				std::cout << "continue? [y/n] \n";
+			} while (_getch() == 'y');
 			break;
 		default:
 			std::cout << "Please give valid input \n";
@@ -367,6 +430,126 @@ int __cdecl main(void*, void*){
 	// restart_list();
 
 }
+
+
+
+
+void test4() {
+	// 100,000 config list to extend the list memory
+	config_list(100000, 100000);
+
+	// preset the chessboard image filling the square
+	makeChessboard(&grayChessboard);
+
+	while (!PrintImage(&grayChessboard))
+	{
+		// Do something else while the RTC5 is working. For example:
+		// Samsara - turning the wheels
+		static char wheel[] = "||//--\\\\";
+		static UINT index = 0;
+		printf("\r- spending idle time %c %c", wheel[7 - index], wheel[index]);
+		++index &= 7;
+
+	}
+
+}
+
+
+// Preset pixel in an image, this one for chess board
+void makeChessboard(image* picture) {
+
+	// the square of the chess board step
+	// should be 0.25 mm * 1337.6 = 334.4 bit/mm 
+	// black represent 0 and white represent 255
+	const UINT CHESSBOARDSTEP = 334;
+
+
+	UINT i, j, k;
+	UINT lineInterval, lines;
+	unsigned char* pPixel, * pPixel2;
+	
+	lines = picture->lpi; // 100 lines per image
+	lineInterval = picture->ppl; // 512 lineInterval
+
+
+	// set all to black to see the effect
+	// pPixel++ change of the address
+	for (j = 0, pPixel = picture->raster; j < lines; j++) {
+		for (i = 0; i < picture->ppl; i++, pPixel++) {
+			*pPixel = 0;
+		}
+	}
+
+
+}
+
+// print out the image using build in function 
+int PrintImage(image* picture){
+	static int line = 0;                // current line
+	static unsigned char* pPixel;       // pointer to the current pixel
+
+	if (!line){
+		pPixel = picture->raster;       // 1st pixel of the 1st line
+	}
+
+	//  Check whether the corresponding list is free to be loaded.
+	//  If successful load_list returns the list number, otherwise 0 
+	if (!load_list((line & 1) + 1, 0)) return 0;
+
+	//  Now, the list is no more busy and already opened 
+	//  set_start_list_pos( ( line & 1 ) + 1, 0 ) has been excuted
+
+	// A jump to the beginning of the next line
+	jump_abs(picture->xLocus - Offset,
+		picture->yLocus - (long)((double)line * picture->dotDistance));
+
+	set_pixel_line(AnalogOutChannel, PixelHalfPeriod, picture->dotDistance, 0.0);
+
+	unsigned char Pixel(*pPixel++);
+	UINT PixelCount(1);
+
+	for (UINT i = 1; i < picture->ppl; i++, pPixel++)
+	{
+		//  Save list buffer space for identical pixel values
+		if (*pPixel == Pixel)
+		{
+			PixelCount++;
+
+		}
+		else
+		{
+			set_n_pixel((UINT)(DigitalBlack + DigitalGain * Pixel),
+				(UINT)(AnalogBlack + AnalogGain * Pixel),
+				PixelCount);
+			PixelCount = 1;
+			Pixel = *pPixel;
+
+		}
+
+	}
+
+	set_n_pixel((UINT)(DigitalBlack + DigitalGain * Pixel),
+		(UINT)(AnalogBlack + AnalogGain * Pixel),
+		PixelCount);
+
+	set_end_of_list();
+
+	// Only, apply execute_list for the first list. Otherwise, use auto_change.
+	line ? auto_change() : execute_list(1);
+
+	line++;
+
+	if (line == picture->lpi)
+	{
+		line = 0;
+		return 1;              // Success - image printing finished
+
+	}
+
+	return 0;                  // Image printing not yet finished
+
+}
+
 
 
 // 
