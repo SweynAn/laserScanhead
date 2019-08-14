@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <conio.h>
 #include <math.h>
+#include <vector>
 
 // RTC5 header file for explicitly linking to the RTC5DLL.DLL
 #include "RTC5expl.h"
@@ -158,6 +159,9 @@ void test2_1();				     //	 Circle drawing
 void test3_1();                  //  Square Drawing 
 void test3_2(long a, double v);  //  Helpper method helps with 3_1
 void test4();					 //  bitmap test
+void test4_1();					 //  vector method for chessboard
+void test4_2(long a, locus& xy, double v);
+void test5_1();					 //  vector method for build up circle
 void terminateDLL();             //  waits for a keyboard hit to terminate
 
 int PrintImage(image* picture);  
@@ -345,7 +349,8 @@ int __cdecl main(void*, void*){
 	std::cout << "[1] Test1 draw simple line based vector\n";
 	std::cout << "[2] Test2 draw circle with radius input\n";
 	std::cout << "[3] Test3 Fill a square \n";
-	std::cout << "[4] Test4 will test bitmap input \n";
+	std::cout << "[4] Test4 will make a chessboard\n";
+	std::cout << "[5] Test5 will drill circular hole on fiber \n";
 	std::cout << "Input 'y' to continue the same test, others to exit or switch\n";
 	std::cout << "Input 's' to suspend the test [Program developing]\n";
 
@@ -380,9 +385,16 @@ int __cdecl main(void*, void*){
 			} while ( _getch() == 'y');
 			break;
 		case '4':
-			std::cout << "Test 4 will fill a bitmap \n";
+			std::cout << "Test 4 make chessboard \n";
 			do {
-				test4();
+				test4_1();
+				std::cout << "continue? [y/n] \n";
+			} while (_getch() == 'y');
+			break;
+		case '5':
+			std::cout << "Test 5 drill circular hole\n";
+			do {
+				test5_1();
 				std::cout << "continue? [y/n] \n";
 			} while (_getch() == 'y');
 			break;
@@ -433,7 +445,6 @@ int __cdecl main(void*, void*){
 
 
 
-
 void test4() {
 	// 100,000 config list to extend the list memory
 	config_list(100000, 100000);
@@ -454,8 +465,8 @@ void test4() {
 
 }
 
-
 // Preset pixel in an image, this one for chess board
+// Unsucessful
 void makeChessboard(image* picture) {
 
 	// the square of the chess board step
@@ -474,12 +485,24 @@ void makeChessboard(image* picture) {
 
 	// set all to black to see the effect
 	// pPixel++ change of the address
-	for (j = 0, pPixel = picture->raster; j < lines; j++) {
-		for (i = 0; i < picture->ppl; i++, pPixel++) {
+	for (j = 0, pPixel = picture->raster; j < lines/2; j++) {
+		for (i = 0; i < ((picture->ppl)/4) ; i++, pPixel++) {
 			*pPixel = 0;
 		}
-	}
 
+		for (; i < lineInterval/2; i++, pPixel++) {
+			*pPixel = 255;
+		}
+
+		for (; i < (lineInterval* 3/4); i++, pPixel++) {
+			*pPixel = 0;
+		}
+
+		for (; i < lineInterval; i++, pPixel++) {
+			*pPixel = 255;
+		}
+	}
+	
 
 }
 
@@ -498,7 +521,7 @@ int PrintImage(image* picture){
 
 	//  Now, the list is no more busy and already opened 
 	//  set_start_list_pos( ( line & 1 ) + 1, 0 ) has been excuted
-
+	set_mark_speed(10);
 	// A jump to the beginning of the next line
 	jump_abs(picture->xLocus - Offset,
 		picture->yLocus - (long)((double)line * picture->dotDistance));
@@ -550,7 +573,66 @@ int PrintImage(image* picture){
 
 }
 
+// vector method making chessboard
+void test4_1() {
+	std::cout << "Chessboard dimension 10*10 mm\n";
+	std::cout << "Each square 2.5*2.5 mm\n";
 
+	// 0.25*1337.6 = 334.4 approximately
+	// 
+	// need to add the speed parameter 1337.6*vmark
+	// use 0.1 so far
+	locus xy;
+	int size = 8;
+
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+			if ( ((i + j)%2)==0 ){
+				std::cout << "#";
+				xy.xval = i * 334;
+				xy.yval = j * 334;
+				test4_2(334, xy, 133.76);
+			}
+			else {
+				std::cout << " ";
+			}
+		}
+		std::cout << "\n";
+	}
+}
+
+// helper method for test 4_1
+void test4_2(long a, locus &xy, double v) {
+	long c,x,y,i;
+	x = xy.xval;
+	y = xy.yval;
+	c = a;
+	
+	i = 10; // printing time
+	do {
+		while (!load_list(1, 0)) {};
+		set_mark_speed(v);
+		jump_abs(-a + x, c + y);
+		while (c > -a) {
+			mark_abs(a + x, c + y);
+			mark_abs(-a + x, c + y);
+			c -= 8;
+		}
+
+		c = -a;
+		jump_abs(-c + x, -a + y);
+
+		while (c < a) {
+			mark_abs(c + x, -a + y);
+			mark_abs(c + x, a + y);
+			c += 8;
+		}
+
+		set_end_of_list();
+		execute_list(1U);
+		i--;
+	} while (i>0);
+}
 
 // 
 // Description: test1_1
