@@ -30,6 +30,9 @@
 #include <conio.h>
 #include <math.h>
 #include <vector>
+#include <list>
+#include <iostream>
+using namespace std;
 
 // RTC5 header file for explicitly linking to the RTC5DLL.DLL
 #include "RTC5expl.h"
@@ -104,6 +107,8 @@ const UINT   PixelHalfPeriod = 100 * 8;   //  100 us [1/8 us] must be at least 1
 // End Locus of a Line
 struct locus { long xval, yval; };
 
+struct polygonLine { long x1, y1, x2, y2;  };
+
 unsigned char frame[Pixels][Lines];
 
 struct image
@@ -162,14 +167,14 @@ void test4();					 //  bitmap test
 void test4_1();					 //  vector method for chessboard
 void test4_2(long a, locus& xy, double v);
 void test5_1();					 //  vector method for build up circle
+void test5_2(std::list <polygonLine>& polygonEdgeList); // helper method for5_1
 void terminateDLL();             //  waits for a keyboard hit to terminate
 
 int PrintImage(image* picture);  
 void makeChessboard( image * picture); 
 								// make chess board using pixel mode           
 
-#include <iostream>
-using namespace std;
+
 
 
 // _cdecl is "Calling conventions"
@@ -356,7 +361,7 @@ int __cdecl main(void*, void*){
 
 
 	do {
-		std::cout << "Input the test number [1/2/3/4]: \n";
+		std::cout << "Input the test number [1/2/3/4/5]: \n";
 		switch (_getch())
 		{
 		case '1':
@@ -443,6 +448,54 @@ int __cdecl main(void*, void*){
 
 }
 
+void test5_1() {
+	
+	list <polygonLine> polygonEdgeList; // list of polygons to fill in 
+	double r, s, x, y;
+	long i=0;
+	polygonLine l;
+	s = 16;
+	r = 10 * 1337.6;  // radius 10 mm
+
+	// go from y to -y
+	for (x=r-s ; x > -r;  ) {
+		y = sqrt(r*r - x*x);
+		l.x1 = long(x);
+		l.y1 = long(y);
+		l.x2 = long(x);
+		l.y2 = long(-y);
+		polygonEdgeList.push_back(l);
+		x = x-s;
+
+		i++;
+		cout <<i<<": x1: " << l.x1 << " x2: " << l.x2 << " y1: " << l.y1 << " y2: " << l.y2<<"\n";
+	}
+
+	// go from x to -x
+	for (y = r - s; y > -r; ) {
+		x = sqrt(r * r - y * y);
+		l.x1 = long(x);
+		l.y1 = long(y);
+		l.x2 = long(-x);
+		l.y2 = long(y);
+		polygonEdgeList.push_back(l);
+		y = y - s;
+	}
+
+	test5_2(polygonEdgeList);
+}
+void test5_2(std::list <polygonLine>& polygonEdgeList) {
+	while (!load_list(1, 0)) {};
+	set_mark_speed(1337.6);
+	jump_abs(13376,0);
+	for (std::list<polygonLine>::iterator it = polygonEdgeList.begin();
+		it != polygonEdgeList.end(); ++it) {
+		mark_abs(it->x1, it->y1);
+		mark_abs(it->x2, it->y2);
+	}
+	set_end_of_list();
+	execute_list(1);
+}
 
 
 void test4() {
@@ -591,7 +644,7 @@ void test4_1() {
 				std::cout << "#";
 				xy.xval = i * 334;
 				xy.yval = j * 334;
-				test4_2(334, xy, 133.76);
+				test4_2(167, xy, 133.76);
 			}
 			else {
 				std::cout << " ";
@@ -603,6 +656,7 @@ void test4_1() {
 
 // helper method for test 4_1
 void test4_2(long a, locus &xy, double v) {
+	// a is half of the length of square
 	long c,x,y,i;
 	x = xy.xval;
 	y = xy.yval;
@@ -883,7 +937,6 @@ void test3_2( long a, double v) {
 	set_end_of_list();
 	execute_list(1U);
 }
-
 
 
 // 
