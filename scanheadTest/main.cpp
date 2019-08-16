@@ -158,8 +158,6 @@ const locus BeamDump = { -32000, -32000 }; //  Beam Dump Location
 int PlotLine(const locus& destination, UINT* start);
 void draw(const polygon* figure, const size_t& size);
 void test1();
-void test1_1();
-void test1_2();                  //  Line drawing 
 void test2_1();				     //	 Circle drawing
 void test3_1();                  //  Square Drawing 
 void test3_2(long a, double v);  //  Helpper method helps with 3_1
@@ -171,6 +169,7 @@ void test5_2(std::list <polygonLine>& polygonEdgeList); // helper method for5_1
 void test6_1();
 void test6_2(); 
 void test6_3();
+void test7_1();
 void terminateDLL();             //  waits for a keyboard hit to terminate
 
 int PrintImage(image* picture);  
@@ -183,7 +182,6 @@ void makeChessboard( image * picture);
 // _cdecl is "Calling conventions"
 // the stack is cleaned up by the caller
 // creates larger executables than _stdcall 
-
 int __cdecl main(void*, void*){
 
 	if (RTC5open())
@@ -360,12 +358,12 @@ int __cdecl main(void*, void*){
 	std::cout << "[4] Test4 will make a chessboard\n";
 	std::cout << "[5] Test5 will drill circular hole on fiber \n";
 	std::cout << "[6] Test6 will be on/off laser test \n";
+	std::cout << "[7] Test6 will be fiber holder \n";
 	std::cout << "Input 'y' to continue the same test, others to exit or switch\n";
 	std::cout << "Input 's' to suspend the test [Program developing]\n";
 
-
 	do {
-		std::cout << "Input the test number [1/2/3/4/5/6]: \n";
+		std::cout << "Input the test number [1/2/3/4/5/6/7]: \n";
 		switch (_getch())
 		{
 		case '1':
@@ -414,6 +412,13 @@ int __cdecl main(void*, void*){
 				std::cout << "continue? [y/n] \n";
 			} while (_getch() == 'y');
 			break;
+		case '7':
+			std::cout << "Test 7 dig a rectangular \n";
+			do {
+				test7_1();
+				std::cout << "continue? [y/n] \n";
+			} while (_getch() == 'y');
+			break;
 		default:
 			std::cout << "Please give valid input \n";
 			break;
@@ -425,46 +430,11 @@ int __cdecl main(void*, void*){
 	std::cout << "Test Finished! \n";
 	terminateDLL();
 	return 0;
-
-
-	// restart_list();
-	// executed if a list was 
-    // Add a switch method for debugging the program
-    // Switch 1,2,3,4,5 ... and etc.
-    // 1 Laser On/Off
-    // 2 Jump :
-    //		i) physically ensure the location 
-    //         in unit of mm , might need conversion table
-    //         from mm to bit as the result
-    // 3 Jump and Mark point
-    // 4 Mark line using position
-    // 5 Test controlling of speed for Marking
-	// 6 Random Jump of Laser
-    // 7 draw a shape with certain algorithm
-    // Test 1 Control laser ON/OFF
-    // do this part in the lab
-	
-	/*
-    std::cout << "Test1 On/Off Laser Control\n";
-    do{
-    	string s;
-    	while(! _getch()) disable_laser();
-    	while(! _getch()) enable_laser();
-		std::cout << "Continue to check On/Off? [Y/N] \n";
-    	std::cin >> s;
-    	if( s == "n" || s == "N") break;
-	}while(true);
-	*/
-	// restart_list();
-
 }
 
 void test6_1() {
-
-
 	// might need other command to test on/off
 	// disable laser/enable laser
-
 	set_laser_control(LaserControl);
 	disable_laser();
 	enable_laser();
@@ -473,11 +443,11 @@ void test6_1() {
 		if (_kbhit()) { 
 			switch (_getch()) {
 			case 'y':
-				test6_3();
+				set_laser_control(0);
 				cout << "ON!\n";
 				break;
 			case 'n':
-				test6_2();
+				set_laser_control(0x18); 
 				cout<<"OFF!\n";
 				break;
 			case 'b':
@@ -485,34 +455,34 @@ void test6_1() {
 			}
 		}
 	} while (true);
-
 }
 
-void test6_2() {
-	do {
-		cout << "OFF";
-		set_laser_control(0);
-		if (_kbhit())break;
-	} while(true);
-}
+void test7_1() {
+	list <polygonLine> polygonEdgeList; 
+	double x, y, l;
+	x = 160;
+	l = 13376;
+	y = -l / 2;
+	polygonLine l1;
+	while(y<l/2 ){
+		l1.x1 = long(x);
+		l1.y1 = long(y);
+		l1.x2 = long(-x);
+		l1.y2 = long(y);
+		polygonEdgeList.push_back(l1);
+		y = y+16;
+	}
 
-void test6_3() {
-	do {
-		cout << "ON";
-		set_laser_control(0x18);
-		if (_kbhit())break;
-	} while (true);
+	test5_2(polygonEdgeList);
 }
-
 
 void test5_1() {
-	
 	list <polygonLine> polygonEdgeList; // list of polygons to fill in 
 	double r, s, x, y;
 	long i=0;
 	polygonLine l;
 	s = 16;
-	r = 10 * 1337.6;  // radius 10 mm
+	r = 0.5 * 1337.6;  // radius 10 mm
 
 	// go from y to -y
 	for (x=r-s ; x > -r;  ) {
@@ -539,12 +509,18 @@ void test5_1() {
 		y = y - s;
 	}
 
-	test5_2(polygonEdgeList);
+	i = 60;
+
+	while (i>0) { 
+		test5_2(polygonEdgeList); 
+		i--;
+	}
+
 }
+
 void test5_2(std::list <polygonLine>& polygonEdgeList) {
 	while (!load_list(1, 0)) {};
-	set_mark_speed(1337.6);
-	jump_abs(13376,0);
+	set_mark_speed(133.76);
 	for (std::list<polygonLine>::iterator it = polygonEdgeList.begin();
 		it != polygonEdgeList.end(); ++it) {
 		mark_abs(it->x1, it->y1);
@@ -553,7 +529,6 @@ void test5_2(std::list <polygonLine>& polygonEdgeList) {
 	set_end_of_list();
 	execute_list(1);
 }
-
 
 void test4() {
 	// 100,000 config list to extend the list memory
@@ -694,14 +669,15 @@ void test4_1() {
 	// use 0.1 so far
 	locus xy;
 	int size = 8;
-
+	home_position(0, 0);
 	for (int i = 0; i < size; i++) {
 		for (int j = 0; j < size; j++) {
 			if ( ((i + j)%2)==0 ){
 				std::cout << "#";
-				xy.xval = i * 334;
-				xy.yval = j * 334;
-				test4_2(167, xy, 133.76);
+				xy.xval = i * 334*2;
+				xy.yval = j * 334*2;
+				
+				test4_2(167*2, xy, 133.76/2.0);
 			}
 			else {
 				std::cout << " ";
@@ -709,6 +685,7 @@ void test4_1() {
 		}
 		std::cout << "\n";
 	}
+	home_position(-1, -1);
 }
 
 // helper method for test 4_1
@@ -720,6 +697,7 @@ void test4_2(long a, locus &xy, double v) {
 	c = a;
 	
 	i = 10; // printing time
+	set_laser_control(0x18);
 	do {
 		while (!load_list(1, 0)) {};
 		set_mark_speed(v);
@@ -729,10 +707,7 @@ void test4_2(long a, locus &xy, double v) {
 			mark_abs(-a + x, c + y);
 			c -= 8;
 		}
-
 		c = -a;
-		jump_abs(-c + x, -a + y);
-
 		while (c < a) {
 			mark_abs(c + x, -a + y);
 			mark_abs(c + x, a + y);
@@ -743,67 +718,6 @@ void test4_2(long a, locus &xy, double v) {
 		execute_list(1U);
 		i--;
 	} while (i>0);
-}
-
-// 
-// Description: test1_1
-// run with the speed of algorithm inside a do while loop 
-// 
-void test1_1() {
-	LONG a, b;
-	a = 12345;
-	b = 12345;
-
-	std::cout << "Test1_1 with a: " << a << "and b: " << b << "\n";
-
-	while (!load_list(1U, 0U)) {}
-	mark_abs(a, b);
-	set_end_of_list();
-	execute_list(1U);
-
-	/* original part of main 
-	 * no longer needed as while loop can not help us control
-	 * the speed of marking
-	 *
-	std::cout << "Test1_1 mark point/line, hit keyboard break";
-	do {
-		test1_1();
-		if (_kbhit()) break;
-	} while (true);
-	 *
-	 *
-	 */
-}
-
-//
-// test1_2() from 20000 to -20000
-// advanced version of test1_1
-//
-void test1_2() {
-	/*
-	std::cout << "Test1_2 mark line for 10s \n";
-	test1_2();
-	std::cout << "Test1_2 done \n \n";
-	*/
-	LONG x, y, a, b, t;
-	x = 20000;
-	y = 20000;
-	a = -20000;
-	b = -20000;
-	t = 1;
-	std::cout << "Test1_2 with a:" << a << "and b: " << b << "\n";
-	std::cout << "Test1_2 with x:" << x << "and y: " << y << "\n";
-	std::cout << "Will plot for 10 seconds \n";
-
-	while (!load_list(1, 0U)) {}
-	while(t<20){
-		mark_abs(a, b);
-		mark_abs(x, y);
-		++t;
-	}
-
-	set_end_of_list();
-	execute_list(1);
 }
 
 //
@@ -857,7 +771,6 @@ void test1() {
 	set_end_of_list();
 	execute_list(1U);
 }
-
 
 //
 // the test of drawing a circle with respect to the center
@@ -995,7 +908,6 @@ void test3_2( long a, double v) {
 	execute_list(1U);
 }
 
-
 // 
 // Description: draw warmup program 
 // used for test/example
@@ -1048,5 +960,4 @@ void terminateDLL()
 
 	free_rtc5_dll();
 	RTC5close();
-
 }
