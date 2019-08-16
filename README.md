@@ -14,3 +14,7 @@ jump_abs()     //jump to certain position, might realize random jump later
 arc_abs()      // draw circular arc command (x,y,rad) x,y gives center rad gives degree from -3600 to 3600  
   
 Various combination and GUI feature might be added later
+
+
+TEST1~TEST6 implemented basic functionality used in laser scanhead [Scancube 10] with Pharso Laser. 
+Customized hardware feature.
