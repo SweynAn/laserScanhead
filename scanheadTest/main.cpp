@@ -168,6 +168,9 @@ void test4_1();					 //  vector method for chessboard
 void test4_2(long a, locus& xy, double v);
 void test5_1();					 //  vector method for build up circle
 void test5_2(std::list <polygonLine>& polygonEdgeList); // helper method for5_1
+void test6_1();
+void test6_2(); 
+void test6_3();
 void terminateDLL();             //  waits for a keyboard hit to terminate
 
 int PrintImage(image* picture);  
@@ -356,12 +359,13 @@ int __cdecl main(void*, void*){
 	std::cout << "[3] Test3 Fill a square \n";
 	std::cout << "[4] Test4 will make a chessboard\n";
 	std::cout << "[5] Test5 will drill circular hole on fiber \n";
+	std::cout << "[6] Test6 will be on/off laser test \n";
 	std::cout << "Input 'y' to continue the same test, others to exit or switch\n";
 	std::cout << "Input 's' to suspend the test [Program developing]\n";
 
 
 	do {
-		std::cout << "Input the test number [1/2/3/4/5]: \n";
+		std::cout << "Input the test number [1/2/3/4/5/6]: \n";
 		switch (_getch())
 		{
 		case '1':
@@ -400,6 +404,13 @@ int __cdecl main(void*, void*){
 			std::cout << "Test 5 drill circular hole\n";
 			do {
 				test5_1();
+				std::cout << "continue? [y/n] \n";
+			} while (_getch() == 'y');
+			break;
+		case '6':
+			std::cout << "Test 6 laser on/off\n";
+			do {
+				test6_1();
 				std::cout << "continue? [y/n] \n";
 			} while (_getch() == 'y');
 			break;
@@ -447,6 +458,52 @@ int __cdecl main(void*, void*){
 	// restart_list();
 
 }
+
+void test6_1() {
+
+
+	// might need other command to test on/off
+	// disable laser/enable laser
+
+	set_laser_control(LaserControl);
+	disable_laser();
+	enable_laser();
+	
+	do {
+		if (_kbhit()) { 
+			switch (_getch()) {
+			case 'y':
+				test6_3();
+				cout << "ON!\n";
+				break;
+			case 'n':
+				test6_2();
+				cout<<"OFF!\n";
+				break;
+			case 'b':
+				return; // end of test
+			}
+		}
+	} while (true);
+
+}
+
+void test6_2() {
+	do {
+		cout << "OFF";
+		set_laser_control(0);
+		if (_kbhit())break;
+	} while(true);
+}
+
+void test6_3() {
+	do {
+		cout << "ON";
+		set_laser_control(0x18);
+		if (_kbhit())break;
+	} while (true);
+}
+
 
 void test5_1() {
 	
@@ -993,5 +1050,3 @@ void terminateDLL()
 	RTC5close();
 
 }
-
-
